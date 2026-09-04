@@ -846,16 +846,17 @@
     const JAUNPUR_CENTER = [25.7464, 82.6837];
     const OVERPASS_URLS = [
         "https://overpass-api.de/api/interpreter",
+        "https://overpass.kumi.systems/api/interpreter",
         "https://overpass.private.coffee/api/interpreter"
     ];
 
     const CATEGORY_CONFIG = {
-        hospital: { icon: "🏥", label: "Hospital", filters: '["amenity"="hospital"]' },
-        pharmacy: { icon: "💊", label: "Pharmacy", filters: '["amenity"="pharmacy"]' },
-        restaurant: { icon: "🍽️", label: "Food", filters: '["amenity"="restaurant"]' },
-        fuel: { icon: "⛽", label: "Petrol", filters: '["amenity"="fuel"]' },
-        atm: { icon: "🏧", label: "ATM", filters: '["amenity"="atm"]' },
-        police: { icon: "👮", label: "Police", filters: '["amenity"="police"]' }
+        hospital: { icon: "🏥", label: "Hospital" },
+        pharmacy: { icon: "💊", label: "Pharmacy" },
+        restaurant: { icon: "🍽️", label: "Food" },
+        fuel: { icon: "⛽", label: "Petrol" },
+        atm: { icon: "🏧", label: "ATM" },
+        police: { icon: "👮", label: "Police" }
     };
 
     function initNearbyMap() {
@@ -933,13 +934,19 @@
 
     async function fetchOverpass(query) {
         let lastError = null;
-        for (const url of OVERPASS_URLS) {
+        for (const baseUrl of OVERPASS_URLS) {
             try {
+                const url = baseUrl + "?data=" + encodeURIComponent(query);
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 30000);
                 const response = await fetch(url, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-                    body: "data=" + encodeURIComponent(query)
+                    method: "GET",
+                    mode: "cors",
+                    cache: "no-store",
+                    signal: controller.signal,
+                    headers: { "Accept": "application/json" }
                 });
+                clearTimeout(timer);
                 if (!response.ok) throw new Error("HTTP " + response.status);
                 return await response.json();
             } catch (error) {
@@ -954,27 +961,26 @@
 
         const result = document.getElementById("locationResult");
         const list = document.getElementById("nearbyResults");
-        result.innerHTML = "🔎 Finding hospitals, pharmacies, food, petrol pumps, ATMs and police nearby...";
+        result.innerHTML = "🔎 Food, ATM, Police, Hospital aur doosri nearby locations search ho rahi hain...";
         list.innerHTML = "";
 
-        const radius = 5000;
+        const radius = 10000;
         const query = `
-            [out:json][timeout:25];
+            [out:json][timeout:45];
             (
-                node["amenity"="hospital"](around:${radius},${userLat},${userLon});
-                way["amenity"="hospital"](around:${radius},${userLat},${userLon});
-                node["amenity"="pharmacy"](around:${radius},${userLat},${userLon});
-                way["amenity"="pharmacy"](around:${radius},${userLat},${userLon});
-                node["amenity"="restaurant"](around:${radius},${userLat},${userLon});
-                way["amenity"="restaurant"](around:${radius},${userLat},${userLon});
-                node["amenity"="fuel"](around:${radius},${userLat},${userLon});
-                way["amenity"="fuel"](around:${radius},${userLat},${userLon});
-                node["amenity"="atm"](around:${radius},${userLat},${userLon});
-                way["amenity"="atm"](around:${radius},${userLat},${userLon});
-                node["amenity"="police"](around:${radius},${userLat},${userLon});
-                way["amenity"="police"](around:${radius},${userLat},${userLon});
+                nwr["amenity"="hospital"](around:${radius},${userLat},${userLon});
+                nwr["amenity"="clinic"](around:${radius},${userLat},${userLon});
+                nwr["amenity"="pharmacy"](around:${radius},${userLat},${userLon});
+                nwr["amenity"="restaurant"](around:${radius},${userLat},${userLon});
+                nwr["amenity"="fast_food"](around:${radius},${userLat},${userLon});
+                nwr["amenity"="cafe"](around:${radius},${userLat},${userLon});
+                nwr["amenity"="food_court"](around:${radius},${userLat},${userLon});
+                nwr["amenity"="fuel"](around:${radius},${userLat},${userLon});
+                nwr["amenity"="atm"](around:${radius},${userLat},${userLon});
+                nwr["amenity"="police"](around:${radius},${userLat},${userLon});
+                nwr["office"="police"](around:${radius},${userLat},${userLon});
             );
-            out center tags qt;
+            out center tags;
         `;
 
         try {
@@ -986,7 +992,15 @@
                 const pos = getElementPosition(element);
                 if (!pos) return;
                 const tags = element.tags || {};
-                const category = Object.keys(CATEGORY_CONFIG).find(key => tags.amenity === key);
+                let category = null;
+                const amenity = tags.amenity || "";
+
+                if (amenity === "hospital" || amenity === "clinic") category = "hospital";
+                else if (amenity === "pharmacy") category = "pharmacy";
+                else if (["restaurant", "fast_food", "cafe", "food_court"].includes(amenity)) category = "restaurant";
+                else if (amenity === "fuel") category = "fuel";
+                else if (amenity === "atm") category = "atm";
+                else if (amenity === "police" || tags.office === "police") category = "police";
                 if (!category) return;
 
                 const name = tags.name || CATEGORY_CONFIG[category].label;
@@ -1002,18 +1016,23 @@
                     lat: pos[0],
                     lon: pos[1],
                     distance: distanceKm(userLat, userLon, pos[0], pos[1]),
-                    address: tags["addr:street"] || tags["addr:place"] || tags["addr:city"] || "",
+                    address: [tags["addr:housenumber"], tags["addr:street"], tags["addr:place"], tags["addr:city"]].filter(Boolean).join(", "),
                     phone: tags.phone || tags["contact:phone"] || ""
                 });
             });
 
             nearbyPlaces.sort((a, b) => a.distance - b.distance);
-            result.innerHTML = `📍 Location found. Showing ${nearbyPlaces.length} mapped place(s) within 5 km.`;
+            result.innerHTML = nearbyPlaces.length
+                ? `📍 ${nearbyPlaces.length} nearby mapped locations found within 10 km.`
+                : "⚠️ Is area mein OpenStreetMap par mapped locations nahi mili. Map data thodi der baad update ho sakta hai.";
             renderNearbyResults();
             updateNearbyMapMarkers();
         } catch (error) {
-            console.error(error);
-            result.innerHTML = "⚠️ Nearby places could not be loaded right now. Your GPS location is still working. Please try again in a moment.";
+            console.error("Overpass error:", error);
+            result.innerHTML = "⚠️ Nearby service temporarily unavailable. GPS sahi hai; 10–20 seconds baad 'Use My Current Location' dobara dabayein.";
+            nearbyPlaces = [];
+            renderNearbyResults();
+            updateNearbyMapMarkers();
         }
     }
 
