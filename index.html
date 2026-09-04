@@ -235,6 +235,101 @@
             font-size: 9px;
         }
 
+        .nearby-tools {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 7px;
+            margin-top: 10px;
+        }
+
+        .nearby-filter {
+            padding: 9px 5px;
+            border: 1px solid #d7e4df;
+            background: #f7faf8;
+            color: #075e54;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .nearby-filter.active {
+            background: #08745f;
+            color: white;
+            border-color: #08745f;
+        }
+
+        .nearby-status {
+            margin-top: 10px;
+            padding: 10px 12px;
+            border-radius: 11px;
+            background: #f5f8f7;
+            font-size: 12px;
+            color: #53615e;
+        }
+
+        .nearby-results {
+            margin-top: 12px;
+            display: grid;
+            gap: 9px;
+        }
+
+        .nearby-place {
+            border: 1px solid #e1e7e5;
+            border-radius: 13px;
+            padding: 11px;
+            background: white;
+            box-shadow: 0 2px 8px #00000008;
+        }
+
+        .nearby-place-top {
+            display: flex;
+            gap: 9px;
+            align-items: flex-start;
+        }
+
+        .nearby-place-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 11px;
+            background: #eef7f3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 21px;
+            flex: 0 0 auto;
+        }
+
+        .nearby-place-name {
+            font-weight: 800;
+            font-size: 14px;
+        }
+
+        .nearby-place-meta {
+            color: #68736f;
+            font-size: 11px;
+            margin-top: 3px;
+            line-height: 1.4;
+        }
+
+        .nearby-place-actions {
+            display: flex;
+            gap: 7px;
+            margin-top: 9px;
+        }
+
+        .nearby-action {
+            flex: 1;
+            text-align: center;
+            text-decoration: none;
+            padding: 8px;
+            border-radius: 9px;
+            background: #f1f6f4;
+            color: #075e54;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
         .location-button {
             width: 100%;
             margin-top: 12px;
@@ -252,8 +347,6 @@
     <link
         rel="stylesheet"
         href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIINfQ3T7X0vK6kq9gJ7l9Y0J0jM0rj8j0="
-        crossorigin=""
     >
 
 </head>
@@ -418,28 +511,34 @@
             </button>
 
             <div class="section-title">
-                📍 Nearby
+                📍 Nearby Places
             </div>
 
             <div class="map-box">
-                <div id="nearbyMap" aria-label="Jaunpur nearby map"></div>
+                <div id="nearbyMap" aria-label="Nearby places map"></div>
             </div>
 
-
-            <button
-                class="location-button"
-                onclick="getLocation()"
-            >
+            <button class="location-button" onclick="getLocation()">
                 📍 Use My Current Location
             </button>
 
-
-            <div id="locationResult"
-                 style="margin-top:15px;font-size:13px;">
+            <div class="nearby-tools" aria-label="Nearby categories">
+                <button class="nearby-filter active" data-category="all" onclick="setNearbyCategory('all', this)">All</button>
+                <button class="nearby-filter" data-category="hospital" onclick="setNearbyCategory('hospital', this)">🏥 Hospital</button>
+                <button class="nearby-filter" data-category="pharmacy" onclick="setNearbyCategory('pharmacy', this)">💊 Pharmacy</button>
+                <button class="nearby-filter" data-category="restaurant" onclick="setNearbyCategory('restaurant', this)">🍽️ Food</button>
+                <button class="nearby-filter" data-category="fuel" onclick="setNearbyCategory('fuel', this)">⛽ Petrol</button>
+                <button class="nearby-filter" data-category="atm" onclick="setNearbyCategory('atm', this)">🏧 ATM</button>
+                <button class="nearby-filter" data-category="police" onclick="setNearbyCategory('police', this)">👮 Police</button>
             </div>
 
-        </section>
+            <div id="locationResult" class="nearby-status">
+                Location not set. Tap “Use My Current Location” to find places around you.
+            </div>
 
+            <div id="nearbyResults" class="nearby-results"></div>
+
+        </section>
 
 
         <!-- UPDATES -->
@@ -731,202 +830,313 @@
 
     /*
     =====================================
-    REAL DEVICE LOCATION + LEAFLET MAP
+    STAGE 2: REAL GPS + LIVE NEARBY PLACES
+    Data source: OpenStreetMap via Overpass API
     =====================================
     */
 
     let nearbyMap = null;
     let userLocationMarker = null;
+    let nearbyPlaceMarkers = [];
+    let userLat = null;
+    let userLon = null;
+    let currentNearbyCategory = "all";
+    let nearbyPlaces = [];
 
-    // Jaunpur city center (fallback/default map position)
     const JAUNPUR_CENTER = [25.7464, 82.6837];
+    const OVERPASS_URLS = [
+        "https://overpass-api.de/api/interpreter",
+        "https://overpass.private.coffee/api/interpreter"
+    ];
+
+    const CATEGORY_CONFIG = {
+        hospital: { icon: "🏥", label: "Hospital", filters: '["amenity"="hospital"]' },
+        pharmacy: { icon: "💊", label: "Pharmacy", filters: '["amenity"="pharmacy"]' },
+        restaurant: { icon: "🍽️", label: "Food", filters: '["amenity"="restaurant"]' },
+        fuel: { icon: "⛽", label: "Petrol", filters: '["amenity"="fuel"]' },
+        atm: { icon: "🏧", label: "ATM", filters: '["amenity"="atm"]' },
+        police: { icon: "👮", label: "Police", filters: '["amenity"="police"]' }
+    };
 
     function initNearbyMap() {
+        const mapElement = document.getElementById("nearbyMap");
+        if (!mapElement || typeof L === "undefined") return;
 
-        const mapElement =
-            document.getElementById("nearbyMap");
-
-        if (!mapElement || typeof L === "undefined") {
-            return;
-        }
-
-        // Prevent Leaflet from being initialized more than once.
         if (nearbyMap) {
-            setTimeout(function() {
-                nearbyMap.invalidateSize();
-            }, 100);
+            setTimeout(() => nearbyMap.invalidateSize(), 100);
             return;
         }
 
-        nearbyMap = L.map("nearbyMap", {
-            zoomControl: true
-        }).setView(JAUNPUR_CENTER, 13);
+        nearbyMap = L.map("nearbyMap", { zoomControl: true }).setView(JAUNPUR_CENTER, 13);
 
-        L.tileLayer(
-            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-            {
-                maxZoom: 19,
-                attribution:
-                    '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
-            }
-        ).addTo(nearbyMap);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+        }).addTo(nearbyMap);
 
         L.marker(JAUNPUR_CENTER)
             .addTo(nearbyMap)
-            .bindPopup("<b>Jaunpur</b><br>City center");
+            .bindPopup("<b>Jaunpur</b><br>Map starting point");
     }
 
-
     function showPage(pageName) {
-
-        document
-        .querySelectorAll(".page")
-        .forEach(page => {
-            page.classList.remove("active");
-        });
-
-        const targetPage =
-            document.getElementById(pageName);
-
-        if (!targetPage) {
-            return;
-        }
-
+        document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
+        const targetPage = document.getElementById(pageName);
+        if (!targetPage) return;
         targetPage.classList.add("active");
-
         window.scrollTo(0, 0);
 
-        // Leaflet needs a size refresh after a hidden page becomes visible.
         if (pageName === "nearby") {
             initNearbyMap();
-
-            setTimeout(function() {
-                if (nearbyMap) {
-                    nearbyMap.invalidateSize();
-                }
+            setTimeout(() => {
+                if (nearbyMap) nearbyMap.invalidateSize();
             }, 150);
         }
     }
 
+    function setNearbyCategory(category, button) {
+        currentNearbyCategory = category;
+        document.querySelectorAll(".nearby-filter").forEach(btn => btn.classList.remove("active"));
+        if (button) button.classList.add("active");
+        renderNearbyResults();
+        updateNearbyMapMarkers();
+    }
 
-    function getLocation() {
+    function distanceKm(lat1, lon1, lat2, lon2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) ** 2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
 
-        const result =
-            document.getElementById("locationResult");
+    function getElementPosition(element) {
+        if (element.lat != null && element.lon != null) {
+            return [element.lat, element.lon];
+        }
+        if (element.center && element.center.lat != null && element.center.lon != null) {
+            return [element.center.lat, element.center.lon];
+        }
+        return null;
+    }
 
-        if (!navigator.geolocation) {
+    function escapeHtml(value) {
+        return String(value || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
 
-            result.innerHTML =
-                "❌ Geolocation is not supported by this browser.";
+    async function fetchOverpass(query) {
+        let lastError = null;
+        for (const url of OVERPASS_URLS) {
+            try {
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+                    body: "data=" + encodeURIComponent(query)
+                });
+                if (!response.ok) throw new Error("HTTP " + response.status);
+                return await response.json();
+            } catch (error) {
+                lastError = error;
+            }
+        }
+        throw lastError || new Error("Nearby service unavailable");
+    }
 
+    async function loadNearbyPlaces() {
+        if (userLat === null || userLon === null) return;
+
+        const result = document.getElementById("locationResult");
+        const list = document.getElementById("nearbyResults");
+        result.innerHTML = "🔎 Finding hospitals, pharmacies, food, petrol pumps, ATMs and police nearby...";
+        list.innerHTML = "";
+
+        const radius = 5000;
+        const query = `
+            [out:json][timeout:25];
+            (
+                node["amenity"="hospital"](around:${radius},${userLat},${userLon});
+                way["amenity"="hospital"](around:${radius},${userLat},${userLon});
+                node["amenity"="pharmacy"](around:${radius},${userLat},${userLon});
+                way["amenity"="pharmacy"](around:${radius},${userLat},${userLon});
+                node["amenity"="restaurant"](around:${radius},${userLat},${userLon});
+                way["amenity"="restaurant"](around:${radius},${userLat},${userLon});
+                node["amenity"="fuel"](around:${radius},${userLat},${userLon});
+                way["amenity"="fuel"](around:${radius},${userLat},${userLon});
+                node["amenity"="atm"](around:${radius},${userLat},${userLon});
+                way["amenity"="atm"](around:${radius},${userLat},${userLon});
+                node["amenity"="police"](around:${radius},${userLat},${userLon});
+                way["amenity"="police"](around:${radius},${userLat},${userLon});
+            );
+            out center tags qt;
+        `;
+
+        try {
+            const data = await fetchOverpass(query);
+            const seen = new Set();
+            nearbyPlaces = [];
+
+            (data.elements || []).forEach(element => {
+                const pos = getElementPosition(element);
+                if (!pos) return;
+                const tags = element.tags || {};
+                const category = Object.keys(CATEGORY_CONFIG).find(key => tags.amenity === key);
+                if (!category) return;
+
+                const name = tags.name || CATEGORY_CONFIG[category].label;
+                const key = category + "|" + name + "|" + pos[0].toFixed(5) + "|" + pos[1].toFixed(5);
+                if (seen.has(key)) return;
+                seen.add(key);
+
+                nearbyPlaces.push({
+                    id: element.type + "-" + element.id,
+                    name,
+                    category,
+                    icon: CATEGORY_CONFIG[category].icon,
+                    lat: pos[0],
+                    lon: pos[1],
+                    distance: distanceKm(userLat, userLon, pos[0], pos[1]),
+                    address: tags["addr:street"] || tags["addr:place"] || tags["addr:city"] || "",
+                    phone: tags.phone || tags["contact:phone"] || ""
+                });
+            });
+
+            nearbyPlaces.sort((a, b) => a.distance - b.distance);
+            result.innerHTML = `📍 Location found. Showing ${nearbyPlaces.length} mapped place(s) within 5 km.`;
+            renderNearbyResults();
+            updateNearbyMapMarkers();
+        } catch (error) {
+            console.error(error);
+            result.innerHTML = "⚠️ Nearby places could not be loaded right now. Your GPS location is still working. Please try again in a moment.";
+        }
+    }
+
+    function renderNearbyResults() {
+        const list = document.getElementById("nearbyResults");
+        if (!list) return;
+
+        const filtered = currentNearbyCategory === "all"
+            ? nearbyPlaces
+            : nearbyPlaces.filter(place => place.category === currentNearbyCategory);
+
+        if (!filtered.length) {
+            list.innerHTML = nearbyPlaces.length
+                ? '<div class="nearby-status">No mapped places found for this category within 5 km.</div>'
+                : '<div class="nearby-status">Nearby places will appear here after location is detected.</div>';
             return;
         }
 
+        list.innerHTML = filtered.slice(0, 30).map(place => {
+            const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.lat + "," + place.lon)}`;
+            return `
+                <div class="nearby-place">
+                    <div class="nearby-place-top">
+                        <div class="nearby-place-icon">${place.icon}</div>
+                        <div style="min-width:0;flex:1;">
+                            <div class="nearby-place-name">${escapeHtml(place.name)}</div>
+                            <div class="nearby-place-meta">
+                                ${escapeHtml(CATEGORY_CONFIG[place.category].label)} • ${place.distance.toFixed(1)} km away
+                                ${place.address ? "<br>" + escapeHtml(place.address) : ""}
+                                ${place.phone ? "<br>☎ " + escapeHtml(place.phone) : ""}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="nearby-place-actions">
+                        <a class="nearby-action" href="#" onclick="focusNearbyPlace('${place.id}');return false;">📍 Show on map</a>
+                        <a class="nearby-action" href="${mapsUrl}" target="_blank" rel="noopener">🧭 Directions</a>
+                    </div>
+                </div>
+            `;
+        }).join("");
+    }
+
+    function clearNearbyPlaceMarkers() {
+        nearbyPlaceMarkers.forEach(marker => nearbyMap.removeLayer(marker));
+        nearbyPlaceMarkers = [];
+    }
+
+    function updateNearbyMapMarkers() {
+        if (!nearbyMap) return;
+        clearNearbyPlaceMarkers();
+
+        const filtered = currentNearbyCategory === "all"
+            ? nearbyPlaces
+            : nearbyPlaces.filter(place => place.category === currentNearbyCategory);
+
+        filtered.slice(0, 60).forEach(place => {
+            const marker = L.marker([place.lat, place.lon])
+                .addTo(nearbyMap)
+                .bindPopup(`<b>${escapeHtml(place.icon + " " + place.name)}</b><br>${escapeHtml(CATEGORY_CONFIG[place.category].label)} • ${place.distance.toFixed(1)} km away`);
+            marker._nearbyId = place.id;
+            nearbyPlaceMarkers.push(marker);
+        });
+    }
+
+    function focusNearbyPlace(id) {
+        const place = nearbyPlaces.find(item => item.id === id);
+        if (!place || !nearbyMap) return;
+        showPage("nearby");
+        nearbyMap.setView([place.lat, place.lon], 17);
+        const marker = nearbyPlaceMarkers.find(item => item._nearbyId === id);
+        if (marker) marker.openPopup();
+    }
+
+    function getLocation() {
+        const result = document.getElementById("locationResult");
+
+        if (!navigator.geolocation) {
+            result.innerHTML = "❌ Geolocation is not supported by this browser.";
+            return;
+        }
         if (typeof L === "undefined") {
-
-            result.innerHTML =
-                "❌ Map library could not be loaded. Please check your internet connection.";
-
+            result.innerHTML = "❌ Map library could not be loaded. Please check your internet connection.";
             return;
         }
 
         initNearbyMap();
-
-        result.innerHTML =
-            "📍 Getting your current location... Please allow location access.";
+        result.innerHTML = "📍 Getting your current location... Please allow location access.";
 
         navigator.geolocation.getCurrentPosition(
+            async function(position) {
+                userLat = position.coords.latitude;
+                userLon = position.coords.longitude;
+                const accuracy = position.coords.accuracy;
+                const userLatLng = [userLat, userLon];
 
-            function(position) {
+                nearbyMap.setView(userLatLng, 15);
 
-                const latitude =
-                    position.coords.latitude;
-
-                const longitude =
-                    position.coords.longitude;
-
-                const accuracy =
-                    position.coords.accuracy;
-
-                const userLatLng =
-                    [latitude, longitude];
-
-                // Center map on the exact current location.
-                nearbyMap.setView(userLatLng, 16);
-
-                // Remove previous user marker if the button is pressed again.
-                if (userLocationMarker) {
-                    nearbyMap.removeLayer(userLocationMarker);
-                }
-
-                userLocationMarker =
-                    L.marker(userLatLng)
-                        .addTo(nearbyMap)
-                        .bindPopup(
-                            "<b>📍 You are here</b><br>" +
-                            "Current device location"
-                        )
-                        .openPopup();
+                if (userLocationMarker) nearbyMap.removeLayer(userLocationMarker);
+                userLocationMarker = L.marker(userLatLng)
+                    .addTo(nearbyMap)
+                    .bindPopup("<b>📍 You are here</b><br>Current device location")
+                    .openPopup();
 
                 result.innerHTML = `
-
-                    <div style="
-                        background:#f1f8f5;
-                        border:1px solid #cfe8df;
-                        border-radius:12px;
-                        padding:12px;
-                    ">
-
+                    <div style="background:#f1f8f5;border:1px solid #cfe8df;border-radius:12px;padding:12px;">
                         <b>📍 Your Current Location</b><br>
-
-                        Latitude:
-                        ${latitude.toFixed(6)}
-
-                        <br>
-
-                        Longitude:
-                        ${longitude.toFixed(6)}
-
-                        <br>
-
-                        Accuracy:
-                        approximately ${Math.round(accuracy)} meters
-
+                        ${userLat.toFixed(6)}, ${userLon.toFixed(6)}<br>
+                        Accuracy: approximately ${Math.round(accuracy)} meters
                     </div>
-
                 `;
 
+                await loadNearbyPlaces();
             },
-
             function(error) {
-
-                let message =
-                    "❌ Unable to get your location.";
-
-                if (error.code === 1) {
-                    message =
-                        "❌ Location permission was denied. Please allow location access in your browser settings and try again.";
-                } else if (error.code === 2) {
-                    message =
-                        "❌ Your location is currently unavailable. Please check GPS/location services and try again.";
-                } else if (error.code === 3) {
-                    message =
-                        "❌ Location request timed out. Please try again.";
-                }
-
+                let message = "❌ Unable to get your location.";
+                if (error.code === 1) message = "❌ Location permission was denied. Allow location access in browser settings and try again.";
+                else if (error.code === 2) message = "❌ Location is currently unavailable. Check your phone's Location/GPS setting and try again.";
+                else if (error.code === 3) message = "❌ Location request timed out. Please try again.";
                 result.innerHTML = message;
             },
-
-            {
-                enableHighAccuracy: true,
-                timeout: 15000,
-                maximumAge: 0
-            }
-
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
         );
-
     }
-
 
     /*
     =====================================
