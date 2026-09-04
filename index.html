@@ -1,555 +1,946 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Apna Jaunpur · prototype</title>
-  <!-- Font Awesome Icons -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
- <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    body {
-      background: #eef2f7;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 12px;
-    }
+    <title>Apna Jaunpur</title>
 
-    /* phone frame */
-    .phone {
-      max-width: 380px;
-      width: 100%;
-      background: #ffffff;
-      border-radius: 40px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-      overflow: hidden;
-      padding: 16px 12px 12px 12px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      backdrop-filter: blur(2px);
-      transition: all 0.2s ease;
-    }
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-    /* status bar mock */
-    .status-bar {
-      display: flex;
-      justify-content: space-between;
-      padding: 0 8px 6px 8px;
-      font-size: 12px;
-      font-weight: 600;
-      color: #1e293b;
-      letter-spacing: 0.3px;
-    }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7f9;
+            color: #172033;
+        }
 
-    .status-bar i {
-      margin-right: 4px;
-    }
+        .app {
+            max-width: 430px;
+            margin: auto;
+            min-height: 100vh;
+            background: white;
+            padding-bottom: 80px;
+        }
 
-    /* header */
-    .app-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 4px 0 12px 0;
-    }
+        /* HEADER */
 
-    .app-header h1 {
-      font-size: 22px;
-      font-weight: 700;
-      background: linear-gradient(145deg, #0b3b5c, #1e5f7a);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: -0.5px;
-    }
+        header {
+            background: linear-gradient(135deg, #075e54, #0b8f76);
+            color: white;
+            padding: 25px 18px 20px;
+            border-radius: 0 0 25px 25px;
+        }
 
-    .app-header i {
-      font-size: 22px;
-      color: #1e5f7a;
-      background: #e9f0f5;
-      padding: 8px 10px;
-      border-radius: 30px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    }
+        header h1 {
+            font-size: 27px;
+        }
 
-    /* search bar */
-    .search-box {
-      background: #f1f5f9;
-      border-radius: 40px;
-      padding: 12px 18px;
-      margin: 8px 0 16px 0;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      border: 1px solid #e2e8f0;
-      transition: 0.2s;
-    }
+        header p {
+            margin-top: 4px;
+            opacity: 0.9;
+            font-size: 14px;
+        }
 
-    .search-box i {
-      color: #64748b;
-      font-size: 16px;
-    }
+        /* SEARCH */
 
-    .search-box input {
-      background: transparent;
-      border: none;
-      outline: none;
-      width: 100%;
-      font-size: 15px;
-      font-weight: 500;
-      color: #0f172a;
-    }
+        .search-box {
+            margin-top: 18px;
+            background: white;
+            border-radius: 14px;
+            padding: 13px;
+            color: #777;
+        }
 
-    .search-box input::placeholder {
-      color: #94a3b8;
-      font-weight: 400;
-    }
+        .search-box input {
+            border: none;
+            outline: none;
+            font-size: 15px;
+            width: 90%;
+        }
 
-    /* quick action grid */
-    .quick-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin: 8px 0 16px 0;
-    }
+        /* CONTENT */
 
-    .quick-card {
-      background: #f8fafc;
-      border-radius: 24px;
-      padding: 18px 8px;
-      text-align: center;
-      border: 1px solid #e9edf2;
-      box-shadow: 0 4px 6px -4px rgba(0,0,0,0.02);
-      transition: 0.15s;
-    }
+        .content {
+            padding: 20px;
+        }
 
-    .quick-card i {
-      font-size: 26px;
-      color: #1e5f7a;
-      background: #e3eef6;
-      padding: 12px;
-      border-radius: 60px;
-      margin-bottom: 8px;
-      display: inline-block;
-    }
+        .section-title {
+            font-size: 19px;
+            font-weight: bold;
+            margin-bottom: 14px;
+        }
 
-    .quick-card span {
-      display: block;
-      font-weight: 600;
-      font-size: 15px;
-      color: #0f172a;
-      letter-spacing: 0.2px;
-    }
+        /* CARDS */
 
-    .quick-card small {
-      color: #64748b;
-      font-size: 12px;
-      font-weight: 400;
-    }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 13px;
+        }
 
-    /* section title */
-    .section-title {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin: 12px 0 10px 0;
-    }
+        .card {
+            padding: 18px;
+            border-radius: 17px;
+            border: 1px solid #eee;
+            background: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            cursor: pointer;
+            transition: 0.2s;
+        }
 
-    .section-title h3 {
-      font-size: 18px;
-      font-weight: 700;
-      color: #0b2a3e;
-    }
+        .card:hover {
+            transform: translateY(-2px);
+        }
 
-    .section-title a {
-      color: #1e5f7a;
-      font-size: 13px;
-      font-weight: 600;
-      text-decoration: none;
-    }
+        .icon {
+            font-size: 30px;
+        }
 
-    /* horizontal category scroll */
-    .category-scroll {
-      display: flex;
-      gap: 14px;
-      overflow-x: auto;
-      padding: 6px 0 18px 0;
-      scrollbar-width: thin;
-      -webkit-overflow-scrolling: touch;
-    }
+        .card-title {
+            font-weight: bold;
+            margin-top: 8px;
+        }
 
-    .category-scroll::-webkit-scrollbar {
-      height: 4px;
-      background: #e2e8f0;
-      border-radius: 12px;
-    }
+        .card-text {
+            color: #777;
+            font-size: 12px;
+            margin-top: 4px;
+        }
 
-    .category-scroll::-webkit-scrollbar-thumb {
-      background: #b9cfdf;
-      border-radius: 12px;
-    }
+        /* EMERGENCY */
 
-    .cat-item {
-      background: white;
-      border-radius: 40px;
-      padding: 8px 22px 8px 18px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      border: 1px solid #dce3ec;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-      white-space: nowrap;
-      font-weight: 500;
-      font-size: 14px;
-      color: #1e293b;
-    }
+        .emergency {
+            margin-top: 20px;
+            padding: 17px;
+            border-radius: 17px;
+            background: #fff1f1;
+            border: 1px solid #ffd0d0;
+        }
 
-    .cat-item i {
-      color: #1e5f7a;
-      font-size: 16px;
-    }
+        .emergency h3 {
+            margin-bottom: 8px;
+        }
 
-    .cat-item.active {
-      background: #1e5f7a;
-      color: white;
-      border-color: #1e5f7a;
-    }
+        .emergency button {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 12px;
+            background: #d92d20;
+            color: white;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+        }
 
-    .cat-item.active i {
-      color: white;
-    }
+        /* LIST */
 
-    /* emergency banner */
-    .emergency-banner {
-      background: #d62828;
-      background: linear-gradient(145deg, #b91c1c, #d62828);
-      border-radius: 30px;
-      padding: 14px 22px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin: 6px 0 14px 0;
-      color: white;
-      box-shadow: 0 8px 18px -8px rgba(214, 40, 40, 0.3);
-    }
+        .place {
+            display: flex;
+            gap: 12px;
+            padding: 13px 0;
+            border-bottom: 1px solid #eee;
+        }
 
-    .emergency-banner .left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+        .place-icon {
+            font-size: 25px;
+        }
 
-    .emergency-banner i {
-      font-size: 28px;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
-    }
+        .place-name {
+            font-weight: bold;
+        }
 
-    .emergency-banner .text {
-      font-weight: 700;
-      font-size: 18px;
-      letter-spacing: 0.5px;
-    }
+        .place-info {
+            color: #777;
+            font-size: 12px;
+            margin-top: 4px;
+        }
 
-    .emergency-banner .sub {
-      font-size: 12px;
-      opacity: 0.9;
-      font-weight: 400;
-    }
+        /* BOTTOM NAV */
 
-    .emergency-banner .badge {
-      background: rgba(255,255,255,0.25);
-      padding: 6px 16px;
-      border-radius: 40px;
-      font-weight: 600;
-      font-size: 14px;
-      backdrop-filter: blur(4px);
-    }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(430px, 100%);
+            background: white;
+            border-top: 1px solid #ddd;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            padding: 9px 5px;
+        }
 
-    /* bottom navigation */
-    .bottom-nav {
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      background: #ffffff;
-      padding: 12px 4px 6px 4px;
-      margin-top: 8px;
-      border-top: 1px solid #edf2f7;
-    }
+        .bottom-nav button {
+            border: none;
+            background: none;
+            color: #777;
+            font-size: 11px;
+            cursor: pointer;
+        }
 
-    .nav-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      color: #94a3b8;
-      font-size: 12px;
-      transition: 0.15s;
-      cursor: default;
-    }
+        .bottom-nav button.active {
+            color: #08745f;
+            font-weight: bold;
+        }
 
-    .nav-item i {
-      font-size: 22px;
-      margin-bottom: 2px;
-    }
+        .nav-icon {
+            display: block;
+            font-size: 21px;
+            margin-bottom: 3px;
+        }
 
-    .nav-item.active {
-      color: #1e5f7a;
-      font-weight: 600;
-    }
+        /* PAGE */
 
-    .nav-item.active i {
-      text-shadow: 0 2px 8px rgba(30, 95, 122, 0.2);
-    }
+        .page {
+            display: none;
+        }
 
-    /* placeholders */
-    .placeholder-text {
-      color: #64748b;
-      font-size: 13px;
-      padding: 4px 0;
-    }
+        .page.active {
+            display: block;
+        }
 
-    /* small extra */
-    .mt-1 { margin-top: 4px; }
+        .back {
+            border: none;
+            background: none;
+            color: #08745f;
+            font-weight: bold;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
 
-    /* responsive */
-    @media (max-width: 420px) {
-      .phone { border-radius: 32px; padding: 12px 10px; }
-    }
-  </style>
+        /* NEARBY MAP */
+
+        .map-box {
+            height: 300px;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+            background: #e8eee9;
+            position: relative;
+        }
+
+        #nearbyMap {
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .leaflet-control-attribution {
+            font-size: 9px;
+        }
+
+        .location-button {
+            width: 100%;
+            margin-top: 12px;
+            padding: 13px;
+            background: #08745f;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+
+    <!-- Leaflet map library -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIINfQ3T7X0vK6kq9gJ7l9Y0J0jM0rj8j0="
+        crossorigin=""
+    >
+
 </head>
+
 <body>
 
-<div class="phone">
-  <!-- status bar -->
-  <div class="status-bar">
-    <span><i class="fas fa-signal"></i> 5G <i class="fas fa-wifi"></i></span>
-    <span><i class="fas fa-battery-three-quarters"></i> 86%</span>
-  </div>
+<div class="app">
 
-  <!-- header -->
-  <div class="app-header">
-    <h1><i class="fas fa-map-pin" style="color: #1e5f7a; background: none; padding: 0; margin-right: 6px; font-size: 20px;"></i> APNA JAUNPUR</h1>
-    <i class="fas fa-bell"></i>
-  </div>
-  <div style="font-size: 13px; color: #475569; margin: -6px 0 6px 6px; font-weight: 500; letter-spacing: 0.2px;">
-    Jaunpur · Aapka Apna Shehar
-  </div>
+    <!-- HEADER -->
 
-  <!-- search -->
-  <div class="search-box">
-    <i class="fas fa-search"></i>
-    <input type="text" placeholder="Search Jaunpur... (hospitals, food, shops)" value="">
-    <i class="fas fa-sliders-h" style="color: #1e5f7a;"></i>
-  </div>
+    <header>
 
-  <!-- explore & nearby grid -->
-  <div class="quick-grid">
-    <div class="quick-card">
-      <i class="fas fa-compass"></i>
-      <span>Explore</span>
-      <small>places & culture</small>
-    </div>
-    <div class="quick-card" onclick="getLocation()">
-  <i class="fas fa-location-dot"></i>
-  <span>Nearby</span>
-  <small>what's around</small>
+        <h1>APNA JAUNPUR</h1>
+
+        <p>Jaunpur — Aapka Apna Shehar</p>
+
+        <div class="search-box">
+
+            🔎
+
+            <input
+                id="search"
+                type="text"
+                placeholder="Search Jaunpur..."
+                oninput="searchPlaces()"
+            >
+
+        </div>
+
+    </header>
+
+
+    <!-- MAIN CONTENT -->
+
+    <main class="content">
+
+
+        <!-- HOME -->
+
+        <section id="home" class="page active">
+
+            <div class="section-title">
+                Explore Jaunpur
+            </div>
+
+
+            <div class="grid">
+
+                <div class="card" onclick="showPage('explore')">
+                    <div class="icon">🏛️</div>
+                    <div class="card-title">Explore</div>
+                    <div class="card-text">
+                        Places & Heritage
+                    </div>
+                </div>
+
+
+                <div class="card" onclick="showPage('nearby')">
+                    <div class="icon">📍</div>
+                    <div class="card-title">Nearby</div>
+                    <div class="card-text">
+                        Places around you
+                    </div>
+                </div>
+
+
+                <div class="card" onclick="showCategory('hospital')">
+                    <div class="icon">🏥</div>
+                    <div class="card-title">Hospitals</div>
+                    <div class="card-text">
+                        Healthcare
+                    </div>
+                </div>
+
+
+                <div class="card" onclick="showCategory('food')">
+                    <div class="icon">🍽️</div>
+                    <div class="card-title">Food</div>
+                    <div class="card-text">
+                        Restaurants & Cafes
+                    </div>
+                </div>
+
+
+                <div class="card" onclick="showCategory('business')">
+                    <div class="icon">🏪</div>
+                    <div class="card-title">Businesses</div>
+                    <div class="card-text">
+                        Local Shops
+                    </div>
+                </div>
+
+
+                <div class="card" onclick="showPage('updates')">
+                    <div class="icon">📢</div>
+                    <div class="card-title">Updates</div>
+                    <div class="card-text">
+                        City Updates
+                    </div>
+                </div>
+
+            </div>
+
+
+            <!-- EMERGENCY -->
+
+            <div class="emergency">
+
+                <h3>🚨 Emergency</h3>
+
+                <p style="font-size:13px;color:#777;margin-bottom:12px;">
+                    Important emergency numbers
+                </p>
+
+                <button onclick="showEmergency()">
+                    Emergency Numbers
+                </button>
+
+            </div>
+
+
+            <!-- LOCAL PLACES -->
+
+            <div style="margin-top:25px;">
+
+                <div class="section-title">
+                    Popular in Jaunpur
+                </div>
+
+                <div id="placeList"></div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- EXPLORE -->
+
+        <section id="explore" class="page">
+
+            <button class="back" onclick="showPage('home')">
+                ← Back
+            </button>
+
+            <div class="section-title">
+                🏛️ Explore Jaunpur
+            </div>
+
+            <div id="exploreList"></div>
+
+        </section>
+
+
+
+        <!-- NEARBY -->
+
+        <section id="nearby" class="page">
+
+            <button class="back" onclick="showPage('home')">
+                ← Back
+            </button>
+
+            <div class="section-title">
+                📍 Nearby
+            </div>
+
+            <div class="map-box">
+                <div id="nearbyMap" aria-label="Jaunpur nearby map"></div>
+            </div>
+
+
+            <button
+                class="location-button"
+                onclick="getLocation()"
+            >
+                📍 Use My Current Location
+            </button>
+
+
+            <div id="locationResult"
+                 style="margin-top:15px;font-size:13px;">
+            </div>
+
+        </section>
+
+
+
+        <!-- UPDATES -->
+
+        <section id="updates" class="page">
+
+            <button class="back" onclick="showPage('home')">
+                ← Back
+            </button>
+
+            <div class="section-title">
+                📢 Jaunpur Updates
+            </div>
+
+            <div class="place">
+
+                <div class="place-icon">💧</div>
+
+                <div>
+                    <div class="place-name">
+                        City Update
+                    </div>
+
+                    <div class="place-info">
+                        Local civic information will appear here.
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div class="place">
+
+                <div class="place-icon">🎉</div>
+
+                <div>
+                    <div class="place-name">
+                        Events
+                    </div>
+
+                    <div class="place-info">
+                        Jaunpur events and activities.
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+
+
+    <!-- BOTTOM NAV -->
+
+    <nav class="bottom-nav">
+
+        <button
+            class="active"
+            onclick="showPage('home')"
+        >
+            <span class="nav-icon">⌂</span>
+            Home
+        </button>
+
+
+        <button onclick="showPage('explore')">
+
+            <span class="nav-icon">
+                🏛️
+            </span>
+
+            Explore
+
+        </button>
+
+
+        <button onclick="showPage('nearby')">
+
+            <span class="nav-icon">
+                📍
+            </span>
+
+            Nearby
+
+        </button>
+
+
+        <button onclick="showPage('updates')">
+
+            <span class="nav-icon">
+                👤
+            </span>
+
+            Me
+
+        </button>
+
+    </nav>
+
 </div>
-  </div>
 
-  <!-- Hospitals & food quick -->
-  <div class="quick-grid" style="grid-template-columns: repeat(2,1fr); margin-top: -6px;">
-    <div class="quick-card" style="background: #f0f7fe;">
-      <i class="fas fa-hospital" style="background: #d7e5f0;"></i>
-      <span>Hospitals</span>
-      <small>24/7 emergency</small>
-    </div>
-    <div class="quick-card" style="background: #fef6e6;">
-      <i class="fas fa-utensils" style="background: #f5e9d9;"></i>
-      <span>Food</span>
-      <small>restaurants & cafes</small>
-    </div>
-  </div>
 
-  <!-- Businesses & Updates -->
-  <div class="quick-grid" style="grid-template-columns: repeat(2,1fr); margin-top: -6px;">
-    <div class="quick-card">
-      <i class="fas fa-store" style="background: #e1eef5;"></i>
-      <span>Businesses</span>
-      <small>local shops</small>
-    </div>
-    <div class="quick-card">
-      <i class="fas fa-bullhorn" style="background: #f0e7f5;"></i>
-      <span>Updates</span>
-      <small>news & events</small>
-    </div>
-  </div>
 
-  <!-- section: categories -->
-  <div class="section-title">
-    <h3><i class="fas fa-tag" style="color: #1e5f7a; margin-right: 6px;"></i> Explore Jaunpur</h3>
-    <a href="#">see all <i class="fas fa-arrow-right" style="font-size: 10px;"></i></a>
-  </div>
 
-  <div class="category-scroll">
-    <div class="cat-item active"><i class="fas fa-landmark"></i> Heritage</div>
-    <div class="cat-item"><i class="fas fa-mosque"></i> Atala</div>
-    <div class="cat-item"><i class="fas fa-bridge"></i> Bridges</div>
-    <div class="cat-item"><i class="fas fa-utensils"></i> Street Food</div>
-    <div class="cat-item"><i class="fas fa-shopping-bag"></i> Markets</div>
-    <div class="cat-item"><i class="fas fa-tree"></i> Parks</div>
-  </div>
+    <!-- Leaflet map library -->
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""
+    ></script>
 
-  <!-- emergency banner -->
-  <div class="emergency-banner">
-    <div class="left">
-      <i class="fas fa-siren"></i>
-      <div>
-        <div class="text">🚨 EMERGENCY</div>
-        <div class="sub">Police · Hospital · Fire</div>
-      </div>
-    </div>
-    <div class="badge">Tap to call</div>
-  </div>
+    <script>
 
-  <!-- dummy nearby places -->
-  <div style="display: flex; justify-content: space-between; margin: 10px 0 6px 0;">
-    <span style="font-weight: 600; color: #0b2a3e;"><i class="fas fa-clock" style="color: #1e5f7a;"></i> Nearby now</span>
-    <span style="font-size: 13px; color: #64748b;"><i class="fas fa-chevron-right"></i></span>
-  </div>
+    /*
+    =====================================
+    APNA JAUNPUR DATA
+    =====================================
+    */
 
-  <div style="display: flex; gap: 14px; overflow-x: auto; padding-bottom: 14px; scrollbar-width: thin;">
-    <div style="min-width: 110px; background: #f8fafc; border-radius: 24px; padding: 12px; border: 1px solid #e2e8f0;">
-      <i class="fas fa-hotel" style="color: #1e5f7a; font-size: 20px;"></i>
-      <div style="font-weight: 600; font-size: 14px; margin-top: 6px;">Shahi Hotel</div>
-      <div style="font-size: 11px; color: #475569;">0.8 km</div>
-    </div>
-    <div style="min-width: 110px; background: #f8fafc; border-radius: 24px; padding: 12px; border: 1px solid #e2e8f0;">
-      <i class="fas fa-hospital" style="color: #b91c1c; font-size: 20px;"></i>
-      <div style="font-weight: 600; font-size: 14px; margin-top: 6px;">City Hospital</div>
-      <div style="font-size: 11px; color: #475569;">1.2 km</div>
-    </div>
-    <div style="min-width: 110px; background: #f8fafc; border-radius: 24px; padding: 12px; border: 1px solid #e2e8f0;">
-      <i class="fas fa-mosque" style="color: #2b6f4b; font-size: 20px;"></i>
-      <div style="font-weight: 600; font-size: 14px; margin-top: 6px;">Atala Masjid</div>
-      <div style="font-size: 11px; color: #475569;">2.4 km</div>
-    </div>
-  </div>
+    const places = [
 
-  <!-- bottom navigation -->
-  <div class="bottom-nav">
-    <div class="nav-item active"><i class="fas fa-home"></i><span>Home</span></div>
-    <div class="nav-item"><i class="fas fa-compass"></i><span>Explore</span></div>
-    <div class="nav-item"><i class="fas fa-location-dot"></i><span>Nearby</span></div>
-    <div class="nav-item"><i class="fas fa-user"></i><span>Me</span></div>
-  </div>
+        {
+            name: "Shahi Qila",
+            category: "heritage",
+            icon: "🏰",
+            description: "Historic fort of Jaunpur"
+        },
 
-  <!-- tiny footer note -->
-  <div style="text-align: center; font-size: 9px; color: #94a3b8; padding-top: 8px; letter-spacing: 0.3px;">
-    <i class="fas fa-circle" style="color: #1e5f7a; font-size: 6px;"></i> Apna Jaunpur · prototype v1
-  </div>
-</div>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<!-- interactivity: simple click feedback (demo) -->
-<script>
-  (function() {
-    // give a little tactile feedback for quick cards & nav
-    const cards = document.querySelectorAll('.quick-card, .cat-item, .emergency-banner, .nav-item');
-    cards.forEach(el => {
-      el.addEventListener('click', function(e) {
-        // just a subtle haptic-like effect
-        this.style.transition = 'transform 0.08s';
-        this.style.transform = 'scale(0.97)';
-        setTimeout(() => {
-          this.style.transform = 'scale(1)';
-        }, 100);
-        // for emergency show an alert (demo)
-        if (this.classList.contains('emergency-banner') || this.closest('.emergency-banner')) {
-          alert('🚨 Emergency number: 112 (Police) · 102 (Ambulance) · 101 (Fire)');
+        {
+            name: "Atala Masjid",
+            category: "heritage",
+            icon: "🕌",
+            description: "Historic monument"
+        },
+
+        {
+            name: "Jama Masjid",
+            category: "heritage",
+            icon: "🕌",
+            description: "Historic mosque"
+        },
+
+        {
+            name: "Sadar Hospital",
+            category: "hospital",
+            icon: "🏥",
+            description: "Healthcare service"
+        },
+
+        {
+            name: "Local Restaurant",
+            category: "food",
+            icon: "🍽️",
+            description: "Local food"
+        },
+
+        {
+            name: "Jaunpur Market",
+            category: "business",
+            icon: "🏪",
+            description: "Local shopping"
         }
-        // for nav items highlight
-        if (this.classList.contains('nav-item')) {
-          document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-          this.classList.add('active');
-        }
-        // cat-item active
-        if (this.classList.contains('cat-item')) {
-          document.querySelectorAll('.cat-item').forEach(c => c.classList.remove('active'));
-          this.classList.add('active');
-        }
-      });
-    });
 
-    // search box interaction
-    const searchInput = document.querySelector('.search-box input');
-    if (searchInput) {
-      searchInput.addEventListener('focus', function() {
-        this.parentElement.style.borderColor = '#1e5f7a';
-        this.parentElement.style.background = '#ffffff';
-        this.parentElement.style.boxShadow = '0 4px 12px rgba(30,95,122,0.08)';
-      });
-      searchInput.addEventListener('blur', function() {
-        this.parentElement.style.borderColor = '#e2e8f0';
-        this.parentElement.style.background = '#f1f5f9';
-        this.parentElement.style.boxShadow = 'none';
-      });
-      searchInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-          alert('🔍 Searching for: "' + this.value + '" in Jaunpur');
-        }
-      });
+    ];
+
+
+    /*
+    =====================================
+    SHOW PLACES
+    =====================================
+    */
+
+    function renderPlaces(data) {
+
+        const list =
+            document.getElementById("placeList");
+
+        list.innerHTML = "";
+
+        data.forEach(place => {
+
+            list.innerHTML += `
+
+                <div class="place">
+
+                    <div class="place-icon">
+                        ${place.icon}
+                    </div>
+
+                    <div>
+
+                        <div class="place-name">
+                            ${place.name}
+                        </div>
+
+                        <div class="place-info">
+                            ${place.description}
+                        </div>
+
+                    </div>
+
+                </div>
+
+            `;
+
+        });
+
     }
 
-    // header bell icon
-    document.querySelector('.app-header i.fa-bell')?.addEventListener('click', function() {
-      alert('🔔 No new notifications. Stay updated!');
-    });
 
-    // "see all" link
-    document.querySelector('.section-title a')?.addEventListener('click', function(e) {
-      e.preventDefault();
-      alert('📋 Explore all categories & places in Jaunpur');
-    });
+    /*
+    =====================================
+    SEARCH
+    =====================================
+    */
 
-    // nearby items click
-    document.querySelectorAll('[style*="min-width: 110px;"]').forEach(item => {
-      item.addEventListener('click', function() {
-        const name = this.innerText.trim().split('\n')[0] || 'place';
-        alert(`📍 ${name} · details coming soon`);
-      });
-    });
-  console.log('Apna Jaunpur prototype ready!');
-})();
+    function searchPlaces() {
 
-function getLocation() {
-  if (!navigator.geolocation) {
-    alert("Aapke browser mein location supported nahi hai.");
-    return;
-  }
+        const search =
+            document
+            .getElementById("search")
+            .value
+            .toLowerCase();
 
-  navigator.geolocation.getCurrentPosition(
-    function(position) {
-      const lat = position.coords.latitude;
-      const lng = position.coords.longitude;
+        const results =
+            places.filter(place =>
 
-      alert(
-        "📍 Aapki current location mil gayi!\n\n" +
-        "Latitude: " + lat.toFixed(6) + "\n" +
-        "Longitude: " + lng.toFixed(6)
-      );
-    },
-    function() {
-      alert("Location permission allow karein.");
+                place.name
+                .toLowerCase()
+                .includes(search)
+
+                ||
+
+                place.category
+                .toLowerCase()
+                .includes(search)
+
+            );
+
+        renderPlaces(results);
+
     }
-  );
-}
+
+
+    /*
+    =====================================
+    CATEGORY
+    =====================================
+    */
+
+    function showCategory(category) {
+
+        const results =
+            places.filter(
+                place =>
+                place.category === category
+            );
+
+        showPage("home");
+
+        renderPlaces(results);
+
+    }
+
+
+    /*
+    =====================================
+    EMERGENCY
+    =====================================
+    */
+
+    function showEmergency() {
+
+        alert(
+            "🚨 Emergency Numbers\n\n" +
+
+            "Police: 112\n" +
+
+            "Ambulance: 108\n" +
+
+            "Fire: 101"
+        );
+
+    }
+
+
+    /*
+    =====================================
+    REAL DEVICE LOCATION + LEAFLET MAP
+    =====================================
+    */
+
+    let nearbyMap = null;
+    let userLocationMarker = null;
+
+    // Jaunpur city center (fallback/default map position)
+    const JAUNPUR_CENTER = [25.7464, 82.6837];
+
+    function initNearbyMap() {
+
+        const mapElement =
+            document.getElementById("nearbyMap");
+
+        if (!mapElement || typeof L === "undefined") {
+            return;
+        }
+
+        // Prevent Leaflet from being initialized more than once.
+        if (nearbyMap) {
+            setTimeout(function() {
+                nearbyMap.invalidateSize();
+            }, 100);
+            return;
+        }
+
+        nearbyMap = L.map("nearbyMap", {
+            zoomControl: true
+        }).setView(JAUNPUR_CENTER, 13);
+
+        L.tileLayer(
+            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            {
+                maxZoom: 19,
+                attribution:
+                    '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+            }
+        ).addTo(nearbyMap);
+
+        L.marker(JAUNPUR_CENTER)
+            .addTo(nearbyMap)
+            .bindPopup("<b>Jaunpur</b><br>City center");
+    }
+
+
+    function showPage(pageName) {
+
+        document
+        .querySelectorAll(".page")
+        .forEach(page => {
+            page.classList.remove("active");
+        });
+
+        const targetPage =
+            document.getElementById(pageName);
+
+        if (!targetPage) {
+            return;
+        }
+
+        targetPage.classList.add("active");
+
+        window.scrollTo(0, 0);
+
+        // Leaflet needs a size refresh after a hidden page becomes visible.
+        if (pageName === "nearby") {
+            initNearbyMap();
+
+            setTimeout(function() {
+                if (nearbyMap) {
+                    nearbyMap.invalidateSize();
+                }
+            }, 150);
+        }
+    }
+
+
+    function getLocation() {
+
+        const result =
+            document.getElementById("locationResult");
+
+        if (!navigator.geolocation) {
+
+            result.innerHTML =
+                "❌ Geolocation is not supported by this browser.";
+
+            return;
+        }
+
+        if (typeof L === "undefined") {
+
+            result.innerHTML =
+                "❌ Map library could not be loaded. Please check your internet connection.";
+
+            return;
+        }
+
+        initNearbyMap();
+
+        result.innerHTML =
+            "📍 Getting your current location... Please allow location access.";
+
+        navigator.geolocation.getCurrentPosition(
+
+            function(position) {
+
+                const latitude =
+                    position.coords.latitude;
+
+                const longitude =
+                    position.coords.longitude;
+
+                const accuracy =
+                    position.coords.accuracy;
+
+                const userLatLng =
+                    [latitude, longitude];
+
+                // Center map on the exact current location.
+                nearbyMap.setView(userLatLng, 16);
+
+                // Remove previous user marker if the button is pressed again.
+                if (userLocationMarker) {
+                    nearbyMap.removeLayer(userLocationMarker);
+                }
+
+                userLocationMarker =
+                    L.marker(userLatLng)
+                        .addTo(nearbyMap)
+                        .bindPopup(
+                            "<b>📍 You are here</b><br>" +
+                            "Current device location"
+                        )
+                        .openPopup();
+
+                result.innerHTML = `
+
+                    <div style="
+                        background:#f1f8f5;
+                        border:1px solid #cfe8df;
+                        border-radius:12px;
+                        padding:12px;
+                    ">
+
+                        <b>📍 Your Current Location</b><br>
+
+                        Latitude:
+                        ${latitude.toFixed(6)}
+
+                        <br>
+
+                        Longitude:
+                        ${longitude.toFixed(6)}
+
+                        <br>
+
+                        Accuracy:
+                        approximately ${Math.round(accuracy)} meters
+
+                    </div>
+
+                `;
+
+            },
+
+            function(error) {
+
+                let message =
+                    "❌ Unable to get your location.";
+
+                if (error.code === 1) {
+                    message =
+                        "❌ Location permission was denied. Please allow location access in your browser settings and try again.";
+                } else if (error.code === 2) {
+                    message =
+                        "❌ Your location is currently unavailable. Please check GPS/location services and try again.";
+                } else if (error.code === 3) {
+                    message =
+                        "❌ Location request timed out. Please try again.";
+                }
+
+                result.innerHTML = message;
+            },
+
+            {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0
+            }
+
+        );
+
+    }
+
+
+    /*
+    =====================================
+    INITIAL LOAD
+    =====================================
+    */
+
+    renderPlaces(places.slice(0, 4));
+
+    // Initialize the Nearby map after the DOM and Leaflet are available.
+    document.addEventListener("DOMContentLoaded", function() {
+        initNearbyMap();
+    });
+
 </script>
 
 </body>
