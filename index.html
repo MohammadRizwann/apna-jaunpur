@@ -526,6 +526,33 @@
 
     console.log('Apna Jaunpur prototype ready!');
   })();
+  console.log('Apna Jaunpur prototype ready!');
+})();
+
+function getLocation() {
+  if (!navigator.geolocation) {
+    alert("Aapke browser mein location supported nahi hai.");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    function(position) {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+
+      alert(
+        "📍 Aapki current location mil gayi!\n\n" +
+        "Latitude: " + lat.toFixed(6) + "\n" +
+        "Longitude: " + lng.toFixed(6)
+      );
+    },
+    function() {
+      alert("Location permission allow karein.");
+    }
+  );
+}
+
+</script>
 </script>
 
 </body>
