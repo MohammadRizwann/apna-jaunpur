@@ -681,6 +681,8 @@
                 📢 Jaunpur Updates
             </div>
 
+            <div id="liveUpdates"></div>
+
             <div class="place">
                 <div class="place-icon">🏛️</div>
                 <div>
@@ -694,14 +696,6 @@
                 <div>
                     <div class="place-name">Official notices &amp; helpline</div>
                     <div class="place-info">For government notices, district helpline numbers and official announcements, visit the <a href="https://jaunpur.nic.in" target="_blank" rel="noopener">Jaunpur district website</a>.</div>
-                </div>
-            </div>
-
-            <div class="place">
-                <div class="place-icon">🎉</div>
-                <div>
-                    <div class="place-name">Events</div>
-                    <div class="place-info">Local events and activities will be listed here as they're added.</div>
                 </div>
             </div>
 
@@ -942,6 +936,56 @@
 
     /*
     =====================================
+    LIVE UPDATES (from updates.json)
+    Edit updates.json in the repo to post
+    a new update — no code changes needed.
+    =====================================
+    */
+
+    let updatesLoaded = false;
+
+    async function loadUpdates() {
+        const container = document.getElementById("liveUpdates");
+        if (!container) return;
+
+        container.innerHTML = '<div class="place"><div class="place-icon">⏳</div><div><div class="place-name">Loading updates...</div></div></div>';
+
+        try {
+            const response = await fetch("updates.json", { cache: "no-store" });
+            if (!response.ok) throw new Error("HTTP " + response.status);
+            const updates = await response.json();
+
+            if (!Array.isArray(updates) || updates.length === 0) {
+                container.innerHTML = '<div class="place"><div class="place-icon">📭</div><div><div class="place-name">No updates yet</div><div class="place-info">Check back soon.</div></div></div>';
+                return;
+            }
+
+            const sorted = updates.slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+
+            container.innerHTML = sorted.map(update => {
+                const dateLabel = update.date
+                    ? new Date(update.date + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+                    : "";
+                return `
+                    <div class="place">
+                        <div class="place-icon">${escapeHtml(update.icon || "📢")}</div>
+                        <div>
+                            <div class="place-name">${escapeHtml(update.title || "Update")}</div>
+                            <div class="place-info">${escapeHtml(update.text || "")}${dateLabel ? " — " + dateLabel : ""}</div>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+            updatesLoaded = true;
+        } catch (error) {
+            console.error("Updates load error:", error);
+            container.innerHTML = '<div class="place"><div class="place-icon">⚠️</div><div><div class="place-name">Updates could not be loaded</div><div class="place-info">Check your internet connection and try again.</div></div></div>';
+        }
+    }
+
+
+    /*
+    =====================================
     SEARCH
     =====================================
     */
@@ -1089,6 +1133,10 @@
 
         if (pageName === "explore") {
             renderExplore();
+        }
+
+        if (pageName === "updates") {
+            loadUpdates();
         }
     }
 
