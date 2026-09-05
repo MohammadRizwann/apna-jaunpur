@@ -413,7 +413,7 @@
                 </div>
 
 
-                <div class="card" onclick="showCategory('hospital')">
+                <div class="card" onclick="showPage('healthcare')">
                     <div class="icon">🏥</div>
                     <div class="card-title">Hospitals</div>
                     <div class="card-text">
@@ -422,7 +422,7 @@
                 </div>
 
 
-                <div class="card" onclick="showCategory('food')">
+                <div class="card" onclick="showPage('food')">
                     <div class="icon">🍽️</div>
                     <div class="card-title">Food</div>
                     <div class="card-text">
@@ -431,11 +431,20 @@
                 </div>
 
 
-                <div class="card" onclick="showCategory('business')">
+                <div class="card" onclick="showPage('shopping')">
                     <div class="icon">🏪</div>
                     <div class="card-title">Businesses</div>
                     <div class="card-text">
                         Local Shops
+                    </div>
+                </div>
+
+
+                <div class="card" onclick="showPage('transport')">
+                    <div class="icon">🚌</div>
+                    <div class="card-title">Transport</div>
+                    <div class="card-text">
+                        Travel & routes
                     </div>
                 </div>
 
@@ -445,6 +454,15 @@
                     <div class="card-title">Updates</div>
                     <div class="card-text">
                         City Updates
+                    </div>
+                </div>
+
+
+                <div class="card" onclick="showPage('about')">
+                    <div class="icon">ℹ️</div>
+                    <div class="card-title">About</div>
+                    <div class="card-text">
+                        About Apna Jaunpur
                     </div>
                 </div>
 
@@ -461,7 +479,7 @@
                     Important emergency numbers
                 </p>
 
-                <button onclick="showEmergency()">
+                <button onclick="showPage('emergency')">
                     Emergency Numbers
                 </button>
 
@@ -538,6 +556,69 @@
 
             <div id="nearbyResults" class="nearby-results"></div>
 
+        </section>
+
+
+        <!-- HEALTHCARE -->
+
+        <section id="healthcare" class="page">
+            <button class="back" onclick="showPage('home')">← Back</button>
+            <div class="section-title">🏥 Healthcare</div>
+            <div class="place"><div class="place-icon">🏥</div><div><div class="place-name">Sadar Hospital, Jaunpur</div><div class="place-info">Government hospital and public healthcare services.</div></div></div>
+            <div class="place"><div class="place-icon">💊</div><div><div class="place-name">Nearby Pharmacies</div><div class="place-info">Use Nearby to find pharmacies around your current location.</div></div></div>
+            <button class="location-button" onclick="showPage('nearby'); setTimeout(() => setNearbyCategory('hospital'), 250)">📍 Find Nearby Healthcare</button>
+        </section>
+
+
+        <!-- FOOD -->
+
+        <section id="food" class="page">
+            <button class="back" onclick="showPage('home')">← Back</button>
+            <div class="section-title">🍽️ Food & Restaurants</div>
+            <div class="place"><div class="place-icon">🍽️</div><div><div class="place-name">Local Food</div><div class="place-info">Find restaurants, cafes and fast food around you with Nearby.</div></div></div>
+            <button class="location-button" onclick="showPage('nearby'); setTimeout(() => setNearbyCategory('restaurant'), 250)">📍 Find Nearby Food</button>
+        </section>
+
+
+        <!-- SHOPPING -->
+
+        <section id="shopping" class="page">
+            <button class="back" onclick="showPage('home')">← Back</button>
+            <div class="section-title">🏪 Shopping & Businesses</div>
+            <div class="place"><div class="place-icon">🛍️</div><div><div class="place-name">Jaunpur Market</div><div class="place-info">Explore local shops and markets in the city.</div></div></div>
+            <div class="place"><div class="place-icon">📍</div><div><div class="place-name">Nearby Businesses</div><div class="place-info">Nearby business discovery can be added through OpenStreetMap data.</div></div></div>
+        </section>
+
+
+        <!-- EMERGENCY -->
+
+        <section id="emergency" class="page">
+            <button class="back" onclick="showPage('home')">← Back</button>
+            <div class="section-title">🚨 Emergency</div>
+            <div class="place"><div class="place-icon">👮</div><div><div class="place-name">Police</div><div class="place-info"><a href="tel:112">112</a> — National Emergency Number</div></div></div>
+            <div class="place"><div class="place-icon">🚑</div><div><div class="place-name">Ambulance</div><div class="place-info"><a href="tel:108">108</a> — Ambulance service</div></div></div>
+            <div class="place"><div class="place-icon">🚒</div><div><div class="place-name">Fire</div><div class="place-info"><a href="tel:101">101</a> — Fire emergency</div></div></div>
+            <button class="location-button" onclick="showPage('nearby'); setTimeout(() => setNearbyCategory('police'), 250)">📍 Find Nearby Police</button>
+        </section>
+
+
+        <!-- TRANSPORT -->
+
+        <section id="transport" class="page">
+            <button class="back" onclick="showPage('home')">← Back</button>
+            <div class="section-title">🚌 Transport</div>
+            <div class="place"><div class="place-icon">🚌</div><div><div class="place-name">Jaunpur Travel</div><div class="place-info">Use Nearby and map directions to find fuel stations and places around your route.</div></div></div>
+            <button class="location-button" onclick="showPage('nearby'); setTimeout(() => setNearbyCategory('fuel'), 250)">⛽ Find Nearby Fuel</button>
+        </section>
+
+
+        <!-- ABOUT -->
+
+        <section id="about" class="page">
+            <button class="back" onclick="showPage('home')">← Back</button>
+            <div class="section-title">ℹ️ About Apna Jaunpur</div>
+            <div class="place"><div class="place-icon">🏙️</div><div><div class="place-name">Apna Jaunpur</div><div class="place-info">A simple local guide for exploring Jaunpur, discovering nearby services and viewing city information.</div></div></div>
+            <div class="place"><div class="place-icon">🗺️</div><div><div class="place-name">Maps & Nearby</div><div class="place-info">Nearby results use your location and OpenStreetMap data when available.</div></div></div>
         </section>
 
 
@@ -881,11 +962,14 @@
     }
 
     function showPage(pageName) {
-        document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
         const targetPage = document.getElementById(pageName);
-        if (!targetPage) return;
+        if (!targetPage) {
+            console.warn("Page not found:", pageName);
+            return;
+        }
+        document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
         targetPage.classList.add("active");
-        window.scrollTo(0, 0);
+        window.scrollTo({ top: 0, behavior: "smooth" });
 
         if (pageName === "nearby") {
             initNearbyMap();
