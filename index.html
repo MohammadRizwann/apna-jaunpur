@@ -548,6 +548,8 @@
                 <button class="nearby-filter" data-category="fuel" onclick="setNearbyCategory('fuel', this)">⛽ Petrol</button>
                 <button class="nearby-filter" data-category="atm" onclick="setNearbyCategory('atm', this)">🏧 ATM</button>
                 <button class="nearby-filter" data-category="police" onclick="setNearbyCategory('police', this)">👮 Police</button>
+                <button class="nearby-filter" data-category="shop" onclick="setNearbyCategory('shop', this)">🏪 Shop</button>
+                <button class="nearby-filter" data-category="bus" onclick="setNearbyCategory('bus', this)">🚌 Bus Stop</button>
             </div>
 
             <div id="locationResult" class="nearby-status">
@@ -586,7 +588,8 @@
             <button class="back" onclick="showPage('home')">← Back</button>
             <div class="section-title">🏪 Shopping & Businesses</div>
             <div class="place"><div class="place-icon">🛍️</div><div><div class="place-name">Jaunpur Market</div><div class="place-info">Explore local shops and markets in the city.</div></div></div>
-            <div class="place"><div class="place-icon">📍</div><div><div class="place-name">Nearby Businesses</div><div class="place-info">Nearby business discovery can be added through OpenStreetMap data.</div></div></div>
+            <div class="place"><div class="place-icon">📍</div><div><div class="place-name">Nearby Businesses</div><div class="place-info">Find shops and stores around your current location.</div></div></div>
+            <button class="location-button" onclick="showPage('nearby'); setTimeout(() => setNearbyCategory('shop'), 250)">📍 Find Nearby Shops</button>
         </section>
 
 
@@ -607,8 +610,9 @@
         <section id="transport" class="page">
             <button class="back" onclick="showPage('home')">← Back</button>
             <div class="section-title">🚌 Transport</div>
-            <div class="place"><div class="place-icon">🚌</div><div><div class="place-name">Jaunpur Travel</div><div class="place-info">Use Nearby and map directions to find fuel stations and places around your route.</div></div></div>
+            <div class="place"><div class="place-icon">🚌</div><div><div class="place-name">Jaunpur Travel</div><div class="place-info">Use Nearby and map directions to find fuel stations, bus stops and places around your route.</div></div></div>
             <button class="location-button" onclick="showPage('nearby'); setTimeout(() => setNearbyCategory('fuel'), 250)">⛽ Find Nearby Fuel</button>
+            <button class="location-button" style="margin-top:10px;" onclick="showPage('nearby'); setTimeout(() => setNearbyCategory('bus'), 250)">🚌 Find Nearby Bus Stops</button>
         </section>
 
 
@@ -766,6 +770,27 @@
         },
 
         {
+            name: "Lal Darwaza Masjid",
+            category: "heritage",
+            icon: "🕌",
+            description: "Historic Sharqi-era mosque"
+        },
+
+        {
+            name: "Shahi Pul (Akbari Bridge)",
+            category: "heritage",
+            icon: "🌉",
+            description: "Historic bridge over the Gomti river"
+        },
+
+        {
+            name: "Khalis Mukhlis Masjid",
+            category: "heritage",
+            icon: "🕌",
+            description: "Historic Sharqi-period mosque"
+        },
+
+        {
             name: "Sadar Hospital",
             category: "hospital",
             icon: "🏥",
@@ -803,6 +828,55 @@
         list.innerHTML = "";
 
         data.forEach(place => {
+
+            list.innerHTML += `
+
+                <div class="place">
+
+                    <div class="place-icon">
+                        ${place.icon}
+                    </div>
+
+                    <div>
+
+                        <div class="place-name">
+                            ${place.name}
+                        </div>
+
+                        <div class="place-info">
+                            ${place.description}
+                        </div>
+
+                    </div>
+
+                </div>
+
+            `;
+
+        });
+
+    }
+
+
+    /*
+    =====================================
+    EXPLORE (heritage places)
+    =====================================
+    */
+
+    function renderExplore() {
+
+        const list =
+            document.getElementById("exploreList");
+
+        if (!list) return;
+
+        const heritagePlaces =
+            places.filter(place => place.category === "heritage");
+
+        list.innerHTML = "";
+
+        heritagePlaces.forEach(place => {
 
             list.innerHTML += `
 
@@ -937,7 +1011,9 @@
         restaurant: { icon: "🍽️", label: "Food" },
         fuel: { icon: "⛽", label: "Petrol" },
         atm: { icon: "🏧", label: "ATM" },
-        police: { icon: "👮", label: "Police" }
+        police: { icon: "👮", label: "Police" },
+        shop: { icon: "🏪", label: "Shop" },
+        bus: { icon: "🚌", label: "Bus Stop" }
     };
 
     function initNearbyMap() {
@@ -976,6 +1052,10 @@
             setTimeout(() => {
                 if (nearbyMap) nearbyMap.invalidateSize();
             }, 150);
+        }
+
+        if (pageName === "explore") {
+            renderExplore();
         }
     }
 
@@ -1063,6 +1143,9 @@
                 nwr["amenity"="atm"](around:${radius},${userLat},${userLon});
                 nwr["amenity"="police"](around:${radius},${userLat},${userLon});
                 nwr["office"="police"](around:${radius},${userLat},${userLon});
+                nwr["shop"](around:${radius},${userLat},${userLon});
+                nwr["amenity"="bus_station"](around:${radius},${userLat},${userLon});
+                nwr["highway"="bus_stop"](around:${radius},${userLat},${userLon});
             );
             out center tags;
         `;
@@ -1085,6 +1168,8 @@
                 else if (amenity === "fuel") category = "fuel";
                 else if (amenity === "atm") category = "atm";
                 else if (amenity === "police" || tags.office === "police") category = "police";
+                else if (amenity === "bus_station" || tags.highway === "bus_stop") category = "bus";
+                else if (tags.shop) category = "shop";
                 if (!category) return;
 
                 const name = tags.name || CATEGORY_CONFIG[category].label;
@@ -1248,6 +1333,7 @@
     */
 
     renderPlaces(places.slice(0, 4));
+    renderExplore();
 
     // Initialize the Nearby map after the DOM and Leaflet are available.
     document.addEventListener("DOMContentLoaded", function() {
